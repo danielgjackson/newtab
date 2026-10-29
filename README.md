@@ -11,7 +11,7 @@ This extension attempts to override the new tab page by other means.
 
 ## Running this extension from source
 
-1. Clone this repository.
+1. Clone this repository, or download it as a [`.zip`](https://github.com/danielgjackson/newtab/archive/refs/heads/main.zip) and open/unpack the archive.
 
 2. Load this directory in Chrome as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) at <code>chrome://extensions</code>
 
