@@ -1,15 +1,10 @@
 {
   "name": "Blank new tab page",
   "description": "Overrides the new tab page, home page, and startup pages to be blank",
-  "version": "0.2",
+  "version": "0.3",
   "incognito": "split",
   "chrome_url_overrides": {
     "newtab": "blank.html"
-  },
-  "chrome_settings_overrides" : {
-    "startup_pages": [
-      "about:blank"
-    ]
   },
   "background": {
     "service_worker": "service-worker.js"
