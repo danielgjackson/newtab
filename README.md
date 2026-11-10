@@ -10,13 +10,9 @@ This extension attempts to override the new tab page by other means.  It uses a 
 
 How later navigations in a tab are treated is configurable:
 
-* *Replace all*: Every navigation to a redirected page is replaced, so the exact redirected URLs are never reachable\*.
-* *Replace Home page and bookmarks*: Navigations to a redirected page are replaced if they are from clicking the Home button, but this also includes bookmarks\*.
+* *Replace all*: Every navigation to a redirected page is replaced, so the exact redirected URLs are never reachable (add an irrelevant query to the URL, e.g. `?_allowed`, to avoid this).
+* *Replace Home page and bookmarks*: Navigations to a redirected page are replaced if they are from clicking the Home button, but this also includes bookmarks (add an irrelevant fragment to the URL, e.g. `#_allowed`, or query, e.g. `?_allowed`, to avoid this).
 * *Do not replace any*: Only a tab's first page is replaced; anything after, including the Home button, will not be replaced.
-
-\* Add an irrelevant query to the URL, e.g. `?_allowed`, to avoid this.
-
-Browsers don't let an extension read the configured new tab or home page. With *Attempt to auto-detect new tab page* enabled (default), the extension remembers the pages opened by new tabs, windows, and at startup, and lists them in the *Options* page to add (*Add pages*) or *Forget*.  While no URLs are set, a notification suggests each detected page -- click it to open the *Options*.
 
 
 ## Running this extension from source
