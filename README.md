@@ -17,7 +17,7 @@ How later navigations in a tab are treated is configurable:
 
 ## Running this extension from source
 
-1. Download this repository as a [`.zip`](https://github.com/danielgjackson/newtab/archive/refs/heads/main.zip) archive, and open/unpack the files.
+1. [Download this repository](https://github.com/danielgjackson/newtab/archive/refs/heads/main.zip) as a `.zip` archive, and open/unpack the files.
 
 2. Choose *Manage extensions* (the address <code>chrome://extensions</code>), *Load unpacked*, and select the unpacked folder to open this extension as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
 
