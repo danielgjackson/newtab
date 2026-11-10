@@ -16,7 +16,7 @@ How later navigations in a tab are treated is configurable:
 
 \* Add an irrelevant query to the URL, e.g. `?_allowed`, to avoid this.
 
-Browsers don't let an extension read the configured new tab or home page, so while no URLs are set, the extension remembers the pages opened by new tabs, windows, and at startup, and lists them in the settings page.
+Browsers don't let an extension read the configured new tab or home page. With *Attempt to auto-detect new tab page* enabled (default), the extension remembers the pages opened by new tabs, windows, and at startup, and lists them in the *Options* page to add (*Add pages*) or *Forget*.  While no URLs are set, a notification suggests each detected page -- click it to open the *Options*.
 
 
 ## Running this extension from source

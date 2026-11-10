@@ -9,19 +9,32 @@ const ALLOW_RULE_ID = 100000;
 const ALLOW_RULE_PRIORITY = 2;
 const REDIRECT_RULE_PRIORITY = 1;
 
-// Number of detected candidate URLs to remember (shown in the settings page when no URLs are set)
+// Number of detected candidate URLs to remember (shown in the settings page)
 const MAX_DETECTED = 5;
 
+// Notifications with this ID prefix open the settings page when clicked
+const SETTINGS_NOTIFICATION_PREFIX = 'settings:';
+// Prefix (after the settings prefix) for detected new tab page notifications, which have a "Stop showing" button
+const DETECTED_NOTIFICATION_PREFIX = `${SETTINGS_NOTIFICATION_PREFIX}detected:`;
 
-function notify(message, title = TITLE) {
+
+async function notify(message, title = TITLE, id = '', buttons = []) {
   console.log(`NOTIFY: ${title}: ${message}`);
   if (!chrome.notifications) return; // Not supported in every browser (e.g. Safari)
-  chrome.notifications.create({
+  const options = {
     type: 'basic',
     iconUrl: 'icon.png',
     title,
     message
-  });
+  };
+  if (buttons.length) options.buttons = buttons.map((button) => ({ title: button }));
+  try {
+    // Clear any existing notification with the same ID, so that it is shown again rather than silently updated
+    if (id) await chrome.notifications.clear(id);
+    await chrome.notifications.create(id, options);
+  } catch (error) {
+    console.error(`ERROR: Problem showing notification: ${error}`);
+  }
 }
 
 
@@ -71,7 +84,7 @@ async function start() {
     });
 
     if (!addRules.length) {
-      notify('No URL set for override - open the extension settings to choose one (detected pages are listed there)');
+      //notify('No URL set for override - click to open the extension Options', TITLE, `${SETTINGS_NOTIFICATION_PREFIX}no-url`);
     }
   } catch (error) {
     console.error(`ERROR: Problem setting redirect rules: ${error}`);
@@ -165,10 +178,11 @@ function isHomePageUrl(url, filterUrls) {
   return filterUrls.some((filterUrl) => filterUrl.toLowerCase() === normalized);
 }
 
-// When no URLs are configured, remember the pages that a tab's first navigation loads
+// When auto-detection is enabled, remember the pages that a tab's first navigation loads
 // (likely the new tab page, home page, or startup pages), to offer them in the settings page.
-async function recordDetected(details, url) {
+async function recordDetected(details, url, settings) {
   if (!isWebUrl(url)) return;
+  if (urlMatches(url, settings.filterUrls)) return; // Already being redirected
   if (['link', 'reload', 'form_submit'].includes(details.transitionType)) return;
   if ((details.transitionQualifiers || []).includes('forward_back')) return;
 
@@ -176,6 +190,11 @@ async function recordDetected(details, url) {
   const entry = { url, transitionType: details.transitionType, time: Date.now() };
   const updated = [entry, ...detected.filter((item) => item.url !== url)].slice(0, MAX_DETECTED);
   await chrome.storage.local.set({ detected: updated });
+
+  // Suggest the detected page each time it is seen, while nothing is being redirected yet
+  if (!settings.filterUrls.length) {
+    await notify(`Possible new tab page detected: ${url}\nTo redirect it, click here, or open the extension's Options: Extensions toolbar button, \u22ee menu, Options.`, TITLE, `${DETECTED_NOTIFICATION_PREFIX}${url}`, ['Stop showing']);
+  }
 }
 
 async function handleCommit(details) {
@@ -189,10 +208,11 @@ async function handleCommit(details) {
     const firstCommit = await markTabSeen(details.tabId);
     const settings = await getSettings();
 
-    if (!settings.filterUrls.length) {
-      if (firstCommit) await recordDetected(details, startUrl);
-      return;
+    if (firstCommit && settings.autoDetect) {
+      await recordDetected(details, startUrl, settings);
     }
+
+    if (!settings.filterUrls.length) return;
 
     // 'home' mode: in an existing (trusted) tab, the "Home" button is reported as an 'auto_bookmark' transition
     // (unfortunately, so is opening an exactly-matching bookmark)
@@ -238,6 +258,26 @@ chrome.tabs.onReplaced.addListener((addedTabId, removedTabId) => {
     return true;
   });
 });
+
+// Clicking a settings notification opens the settings page
+if (chrome.notifications) {
+  chrome.notifications.onClicked.addListener((notificationId) => {
+    if (!notificationId.startsWith(SETTINGS_NOTIFICATION_PREFIX)) return;
+    chrome.notifications.clear(notificationId);
+    chrome.runtime.openOptionsPage();
+  });
+
+  // "Stop showing" on a detected new tab page notification turns off auto-detection
+  chrome.notifications.onButtonClicked.addListener(async (notificationId, buttonIndex) => {
+    if (!notificationId.startsWith(DETECTED_NOTIFICATION_PREFIX) || buttonIndex !== 0) return;
+    chrome.notifications.clear(notificationId);
+    try {
+      await chrome.storage.sync.set({ autoDetect: false });
+    } catch (error) {
+      console.error(`ERROR: Problem disabling auto-detection: ${error}`);
+    }
+  });
+}
 
 // Re-apply settings whenever they change (e.g. 'Save' on the settings page).
 chrome.storage.onChanged.addListener((changes, areaName) => {

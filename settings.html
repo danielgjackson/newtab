@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="color-scheme" content="light dark" />
-  <title>Blank New Tab settings</title>
+  <title>Blank New Tab options</title>
   <style>
     :root {
       --bg: #ffffff;
@@ -16,6 +16,9 @@
       --accent-fg: #ffffff;
       --accent-soft: #ddf4ff;
       --error: #cf222e;
+      --warning-fg: #7d4e00;
+      --warning-bg: #fff8c5;
+      --warning-border: #d4a72c;
       --radius: 8px;
     }
     @media (prefers-color-scheme: dark) {
@@ -30,6 +33,9 @@
         --accent-fg: #ffffff;
         --accent-soft: #12263f;
         --error: #f85149;
+        --warning-fg: #e3b341;
+        --warning-bg: #272115;
+        --warning-border: #9e6a03;
       }
     }
 
@@ -54,6 +60,30 @@
     .hint { margin: 0; color: var(--muted); font-size: 12.5px; }
 
     code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    /* Round cross button: clears a field, or forgets a detected page */
+    button.icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1;
+    }
+    button.icon:hover { background: var(--border); color: var(--fg); }
+    button.icon[hidden] { display: none; }
+
+    /* Field with a clear button in its top-right corner */
+    .clearable { position: relative; }
+    .clearable textarea, .clearable input { padding-right: 34px; }
+    .clearable button.icon { position: absolute; top: 6px; right: 6px; }
 
     textarea, input[type="url"] {
       width: 100%;
@@ -91,6 +121,13 @@
       font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
     .detected .kind { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .detected .item { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .detected .item input { margin: 0; accent-color: var(--accent); }
+    .detected-actions { display: flex; justify-content: flex-end; }
+    .detected-actions[hidden] { display: none; }
+
+    .checkbox { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .checkbox input { margin: 0; accent-color: var(--accent); }
 
     fieldset { margin: 0; padding: 0; border: 0; display: grid; gap: 8px; }
     legend { padding: 0; margin-bottom: 6px; }
@@ -126,6 +163,17 @@
     }
     .status { margin-right: auto; font-size: 12.5px; }
     .status.error { color: var(--error); }
+
+    .notice {
+      margin: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--warning-border);
+      border-radius: var(--radius);
+      background: var(--warning-bg);
+      color: var(--warning-fg);
+    }
+    .notice[hidden] { display: none; }
+    .notice strong { display: block; }
     .status.unsaved { color: var(--muted); }
 
     button {
@@ -141,25 +189,48 @@
     button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
     button.primary:hover { filter: brightness(1.1); }
     button.small { padding: 2px 10px; font-size: 12px; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    button:disabled:hover { border-color: var(--border); filter: none; }
 
     .asterisk { font-size: 12px; color: red; font-weight: 600; vertical-align: super; }
   </style>
 </head>
 <body>
   <form>
+    <div class="notice" id="no-redirects" role="status" hidden>
+      <strong>No pages are currently being redirected.</strong>
+      Add the pages to redirect below, then Save.
+    </div>
+
     <div class="field">
-      <label class="label" for="url">Pages to redirect</label>
-      <textarea id="url" name="url" rows="3" spellcheck="false" autocomplete="off"></textarea>
-      <p class="hint">One URL per line, to be matched exactly.</p>
+      <label class="checkbox">
+        <input type="checkbox" id="autoDetect" name="autoDetect" />
+        <span class="label">Log new tab page addresses</span>
+      </label>
       <div class="detected" id="detected" hidden>
-        <p class="hint">Pages seen opening in new tabs, windows, or at startup:</p>
+        <p class="hint" id="detected-hint">Pages seen opening in new tabs, windows, or at startup:</p>
         <ul id="detected-list"></ul>
+        <div class="detected-actions" id="detected-actions">
+          <button type="button" id="add-pages">Add to redirect list</button>
+        </div>
       </div>
     </div>
 
     <div class="field">
+      <label class="label" for="url">Pages to redirect</label>
+      <div class="clearable">
+        <textarea id="url" name="url" rows="3" spellcheck="false" autocomplete="off"></textarea>
+        <button type="button" class="icon" data-clear="url" title="Clear" aria-label="Clear pages to redirect" hidden>&times;</button>
+      </div>
+      <p class="hint">One URL per line, to be matched exactly.</p>
+    </div>
+
+    <div class="field">
       <label class="label" for="replacementUrl">Replacement page</label>
-      <input type="url" id="replacementUrl" name="replacementUrl" placeholder="about:blank" spellcheck="false" autocomplete="off" />
+      <div class="clearable">
+        <input type="url" id="replacementUrl" name="replacementUrl" placeholder="about:blank" spellcheck="false" autocomplete="off" />
+        <button type="button" class="icon" data-clear="replacementUrl" title="Clear" aria-label="Clear replacement page" hidden>&times;</button>
+      </div>
       <p class="hint">Leave empty for a blank page.</p>
     </div>
 
@@ -185,7 +256,7 @@
 
     <div class="actions">
       <span class="status" id="status" role="alert"></span>
-      <button type="submit" class="primary">Save</button>
+      <button type="submit" class="primary" id="save">Save</button>
     </div>
   </form>
   <script src="common.js"></script>
