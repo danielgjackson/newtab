@@ -1,8 +1,13 @@
-function saveOptions(e) {
+async function saveOptions(e) {
   e.preventDefault();
-  chrome.storage.sync.set({
-    url: document.querySelector("#url").value,
-  });
+  try {
+    await chrome.storage.sync.set({
+      url: document.querySelector("#url").value,
+    });
+    window.close();
+  } catch (error) {
+    console.log(`ERROR: Problem saving settings: ${error}`);
+  }
 }
 
 function restoreOptions() {

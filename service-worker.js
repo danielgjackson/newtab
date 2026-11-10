@@ -1,12 +1,11 @@
-const BLANK_PAGE = "about:blank"; // chrome.runtime.getURL("blank.html");
+const TITLE = 'Blank New Tab';
+const BLANK_PAGE = 'about:blank'; // chrome.runtime.getURL('blank.html');
 
-const filter = {
-  url: [
-    // { urlEquals: '...' }
-  ],
-};
+// Filter object
+let filter = null;
 
-function notify(message, title = 'Blank New Tab') {
+
+function notify(message, title = TITLE) {
   chrome.notifications.create({
     type: 'basic',
     iconUrl: 'icon.png',
@@ -15,57 +14,83 @@ function notify(message, title = 'Blank New Tab') {
   });
 }
 
-function redirect(details) {
-  chrome.tabs.update(details.tabId, {url: BLANK_PAGE}, function(tab) {
-    if (chrome.runtime.lastError) {
-      const msg = 'Error: ' + chrome.runtime.lastError.message;
-      console.log(msg);
-      notify(msg);
-    }
-  });
-}
 
 function listener(details) {
-  let matching = false;
-
-  // Safety check that this is home page
-  filter.url.forEach(entry => {
-    if (entry.urlEquals === details.url) {
-      matching = true;
+  try {
+    let matching = false;
+    
+    // Only match if the main frame
+    if (details.frameId === 0) {
+      // Only match if this was an exact-match entry
+      filter.url.forEach(entry => {
+        if (entry.urlEquals === details.url) {
+          matching = true;
+        }
+      });
     }
-  });
 
-  // Only match if the main frame
-  if (details.frameId !== 0) {
-    matching = false;
+    // Only match the override URL
+    if (!matching) {
+      return { cancel: true };    // Cancellation only worked in manifest V2 -- TODO: investigate browser.declarativeNetRequest
+    }
+
+    // Redirect
+    chrome.tabs.update(details.tabId, { url: BLANK_PAGE }, function() {
+      if (chrome.runtime.lastError) {
+        const msg = 'Error: ' + chrome.runtime.lastError.message;
+        console.log(msg);
+        notify(msg);
+      }
+    });
+
+  } catch (error) {
+    console.error(`ERROR: Problem in listener: ${error}`);
   }
-
-  // Only match the override URL
-  if (!matching) {
-    return;
-  }
-
-  redirect(details);
 }
 
 
-function installFilter(filterUrl) {
-  if (!filterUrl) {
-    notify('No URL set for override - change extension settings and restart');
-    return;
+async function start() {
+  let newFilterUrl = null;
+  try {
+    const item = await chrome.storage.sync.get('url');
+    newFilterUrl = item.url || null;
+  } catch (error) {
+    console.error(`ERROR: Problem retrieving URL from storage: ${error}`);
   }
 
-  filter.url.push({ urlEquals: filterUrl });
-  chrome.webNavigation.onBeforeNavigate.addListener(listener, filter);
+  try {
+    // Unregister any existing listener
+    if (filter) {
+      chrome.webNavigation.onBeforeNavigate.removeListener(listener);
+      filter = null;
+    }
+
+    // Split multiple URLs
+    const filterUrls = newFilterUrl ? newFilterUrl.split('|').filter((url) => url.trim()) : [];
+
+    // Add listener
+    if (filterUrls.length) {
+      filter = { url: [] };
+      for (const filterUrl of filterUrls) {
+        filter.url.push({ urlEquals: filterUrl });
+      }
+      chrome.webNavigation.onBeforeNavigate.addListener(listener, filter);
+    } else {
+      notify('No URL set for override - change extension settings and restart');
+    }
+
+  } catch (error) {
+    console.error(`ERROR: Problem setting filter: ${error}`);
+  }
 }
 
-
-chrome.storage.sync.get("url").then((item) => {
-  filterUrl = '';
-  if (item.url) {
-    filterUrl = item.url;
+// Re-apply settings whenever they change (e.g. 'Save' on the settings page).
+// storage.onChanged fires in every running instance of the service worker,
+// including the separate incognito instance created by "incognito": "split".
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'sync' && 'url' in changes) {
+    start();
   }
-  installFilter(filterUrl);
-}, (error) => {
-  console.error(`ERROR: Problem rretrieving URL from storage: ${error}`);
 });
+
+start();
