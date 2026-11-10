@@ -21,7 +21,11 @@ How later navigations in a tab are treated is configurable:
 
 2. Choose *Manage extensions* (the address <code>chrome://extensions</code>), *Load unpacked*, and select the unpacked folder to open this extension as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
 
-3. Press the *Extensions* toolbar button (`🧩`), the menu (`⋮`) for *Override new tab*, *Options*.  Under *Pages to redirect*, enter the exact URL of the current home page/new tab page the organisation has set (if the extension has already seen it opening, the address should be listed below to *Add*).  Optionally choose a different *Replacement page* (blank by default), and how later navigations in the tab are treated.  Click *Save* to apply the changes.
+3. Open a new tab and the extension should detect this - click on the popup to open the settings.  Or press the *Extensions* toolbar button (`🧩`), the menu (`⋮`) for *Override new tab*, *Options*.
 
-4. Open a new tab to test.
+4. If the page was detected, click *Add to redirect list*.  Otherwise, under *Pages to redirect*, enter the exact URL of the home page/new tab page the organisation has set.  Optionally choose a different *Replacement page* (blank by default), and how later navigations in the tab are treated.
+
+5. Click *Save* to apply the changes.
+
+6. Open a new tab to test.
 
