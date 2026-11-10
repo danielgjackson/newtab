@@ -6,7 +6,7 @@ The simplest way, of setting changing the <em>New Tab</em>, <em>Home</em>, or <e
 
 This also means the WebExtension manifest settings for <code>chrome_url_overrides</code> / <code>newtab</code>, and <code>chrome_settings_overrides</code> / <code>homepage</code> and <code>startup_pages</code> may not be sufficient either.
 
-This extension attempts to override the new tab page by other means.
+This extension attempts to override the new tab page by other means.  It uses a `declarativeNetRequest` rule to redirect the configured URL to a blank page (this persists across restarts, and will be active before the extension is reloaded).  So that the redirected URL is still reachable if needed, only the first page load in each tab is redirected: once a tab has loaded a page, later navigations in it are allowed through.
 
 
 ## Running this extension from source
@@ -15,7 +15,7 @@ This extension attempts to override the new tab page by other means.
 
 2. Load this directory in Chrome as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) at <code>chrome://extensions</code>
 
-3. Press the *Extensions* toolbar button, the menu (`⋮`) for *Blank new tab page*, *Options*, and set the *Page to detect* to be the current URL for the home page the organisation has set. Separate multiple URLs with a vertical bar (`|`).  Restart the browser after changing this setting.
+3. Press the *Extensions* toolbar button, the menu (`⋮`) for *Blank new tab page*, *Options*, and set the *Page to detect* to be the current URL for the home page the organisation has set. Separate multiple URLs with a vertical bar (`|`).  The change takes effect immediately.
 
 4. Open a new tab to test the extension.
 

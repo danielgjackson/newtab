@@ -7,7 +7,6 @@
     "newtab": "blank.html"
   },
   "chrome_settings_overrides" : {
-    "homepage": "https://example.com/",
     "startup_pages": [
       "about:blank"
     ]
@@ -16,14 +15,19 @@
     "service_worker": "service-worker.js"
   },
   "permissions": [
-    "tabs",
+    "declarativeNetRequest",
     "webNavigation",
-    "webRequest",
     "notifications",
     "storage"
   ],
   "host_permissions": [
     "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["blank.html", "blank.js"],
+      "matches": ["<all_urls>"]
+    }
   ],
   "options_ui": {
     "page": "settings.html"
