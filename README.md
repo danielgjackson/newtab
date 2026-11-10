@@ -1,26 +1,31 @@
-# Blank New Tab
+# Override New Tab
 
-Overrides the default New Tab page with a blank page, even in an organisation-managed browsers.
+Overrides the Home Page and New Tab page on organisation-managed browsers where they cannot be changed.
 
 The simplest way, of setting changing the <em>New Tab</em>, <em>Home</em>, or <em>Startup</em> page may not work in an organisation-managed browser, as these settings may be overridden by the organisation's policies (e.g. via system configuration profiles for <em>HomepageLocation</em>, <em>NewTabPageLocation</em>, or <em>RestoreOnStartupURLs</em>).
 
 This also means the WebExtension manifest settings for <code>chrome_url_overrides</code> / <code>newtab</code>, and <code>chrome_settings_overrides</code> / <code>homepage</code> and <code>startup_pages</code> may not be sufficient either.
 
-This extension attempts to override the new tab page by other means.  It uses a `declarativeNetRequest` rule to redirect the configured URL to a blank page (this persists across restarts, and will be active before the extension is reloaded).  So that the redirected URL is still reachable if needed, only the first page load in each tab is redirected: once a tab has loaded a page, later navigations in it are allowed through.
+This extension attempts to override the new tab page by other means.  It uses a `declarativeNetRequest` rule to redirect the configured URL(s) to a replacement page -- blank by default (this persists across restarts, and will be active before the extension is reloaded).
+
+How later navigations in a tab are treated is configurable:
+
+* *Replace all*: Every navigation to a redirected page is replaced, so the exact redirected URLs are never reachable\*.
+* *Replace Home page and bookmarks*: Navigations to a redirected page are replaced if they are from clicking the Home button, but this also includes bookmarks\*.
+* *Do not replace any*: Only a tab's first page is replaced; anything after, including the Home button, will not be replaced.
+
+\* Add an irrelevant query to the URL, e.g. `?_allowed`, to avoid this.
+
+Browsers don't let an extension read the configured new tab or home page, so while no URLs are set, the extension remembers the pages opened by new tabs, windows, and at startup, and lists them in the settings page.
 
 
 ## Running this extension from source
 
-1. Clone this repository, or download it as a [`.zip`](https://github.com/danielgjackson/newtab/archive/refs/heads/main.zip) and open/unpack the archive.
+1. Download this repository as a [`.zip`](https://github.com/danielgjackson/newtab/archive/refs/heads/main.zip) archive, and open/unpack the files.
 
-2. Load this directory in Chrome as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked) at <code>chrome://extensions</code>
+2. Choose *Manage extensions* (the address <code>chrome://extensions</code>), *Load unpacked*, and select the unpacked folder to open this extension as an [unpacked extension](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
 
-3. Press the *Extensions* toolbar button, the menu (`⋮`) for *Blank new tab page*, *Options*, and set the *Page to detect* to be the current URL for the home page the organisation has set. Separate multiple URLs with a vertical bar (`|`).  The change takes effect immediately.
+3. Press the *Extensions* toolbar button, the menu (`⋮`) for *Override new tab*, *Options*.  Under *Pages to redirect*, enter the exact URL of the current home page/new tab page the organisation has set (if the extension has already seen it opening, the address should be listed below to *Add*).  Optionally choose a different *Replacement page* (blank by default), and how later navigations in the tab are treated.  Click *Save* to apply the changes.
 
-4. Open a new tab to test the extension.
+4. Open a new tab to test.
 
-
-## Links
-
-* https://github.com/GoogleChrome/chrome-extensions-samples/tree/main/api-samples
-* https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API

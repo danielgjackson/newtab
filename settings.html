@@ -2,12 +2,193 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Blank New Tab settings</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1f2328;
+      --muted: #59636e;
+      --border: #d1d9e0;
+      --field-bg: #ffffff;
+      --card-bg: #f6f8fa;
+      --accent: #0969da;
+      --accent-fg: #ffffff;
+      --accent-soft: #ddf4ff;
+      --error: #cf222e;
+      --radius: 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #9198a1;
+        --border: #3d444d;
+        --field-bg: #010409;
+        --card-bg: #151b23;
+        --accent: #4493f8;
+        --accent-fg: #ffffff;
+        --accent-soft: #12263f;
+        --error: #f85149;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px 20px 0;
+      min-width: 480px;
+      max-width: 640px;
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    form { display: grid; gap: 20px; }
+
+    .field { display: grid; gap: 6px; }
+
+    .label { font-weight: 600; }
+
+    .hint { margin: 0; color: var(--muted); font-size: 12.5px; }
+
+    code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    textarea, input[type="url"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--field-bg);
+      color: var(--fg);
+      font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    textarea { resize: vertical; min-height: 4.5em; }
+    textarea:focus, input:focus-visible, button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+    ::placeholder { color: var(--muted); opacity: 0.8; }
+
+    .detected {
+      display: grid;
+      gap: 6px;
+      padding: 10px 12px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: var(--card-bg);
+    }
+    .detected[hidden] { display: none; }
+    .detected ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+    .detected li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .detected .url {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .detected .kind { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+    fieldset { margin: 0; padding: 0; border: 0; display: grid; gap: 8px; }
+    legend { padding: 0; margin-bottom: 6px; }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 2px 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+    .option:hover { border-color: var(--accent); }
+    .option:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+    .option input { grid-row: span 2; margin: 3px 0 0; accent-color: var(--accent); }
+    .option .title { font-weight: 600; }
+    .option .hint { grid-column: 2; }
+
+    /* Button bar: stays visible at the bottom edge while the rest of the page scrolls */
+    .actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin: 0 -20px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .status { margin-right: auto; font-size: 12.5px; }
+    .status.error { color: var(--error); }
+    .status.unsaved { color: var(--muted); }
+
+    button {
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card-bg);
+      color: var(--fg);
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+    button.primary:hover { filter: brightness(1.1); }
+    button.small { padding: 2px 10px; font-size: 12px; }
+
+    .asterisk { font-size: 12px; color: red; font-weight: 600; vertical-align: super; }
+  </style>
 </head>
 <body>
   <form>
-    <label>Page to detect ('|' to separate multiple URLs): <input type="url" id="url" name="url" /></label>
-    <button type="submit">Save</button>
+    <div class="field">
+      <label class="label" for="url">Pages to redirect</label>
+      <textarea id="url" name="url" rows="3" spellcheck="false" autocomplete="off"></textarea>
+      <p class="hint">One URL per line, to be matched exactly.</p>
+      <div class="detected" id="detected" hidden>
+        <p class="hint">Pages seen opening in new tabs, windows, or at startup:</p>
+        <ul id="detected-list"></ul>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label" for="replacementUrl">Replacement page</label>
+      <input type="url" id="replacementUrl" name="replacementUrl" placeholder="about:blank" spellcheck="false" autocomplete="off" />
+      <p class="hint">Leave empty for a blank page.</p>
+    </div>
+
+    <fieldset>
+      <legend class="label">After a tab has loaded its first page</legend>
+      <label class="option">
+        <input type="radio" name="mode" value="all" />
+        <span class="title">Replace all</span>
+        <span class="hint">Every navigation to a redirected page is replaced, so the exact redirected URLs are never reachable<span class="asterisk">*</span>.</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="mode" value="home" />
+        <span class="title">Replace Home page and bookmarks</span>
+        <span class="hint">Navigations to a redirected page are replaced if they are from clicking the Home button, but this also includes bookmarks<span class="asterisk">*</span>.</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="mode" value="none" />
+        <span class="title">Do not replace any</span>
+        <span class="hint">Only a tab's first page is replaced; anything after, including the Home button, will not be replaced.</span>
+      </label>
+      <p class="hint"><span class="asterisk">*</span> Add an irrelevant query to the URL, e.g. <code>?_allowed</code>, to avoid this.</p>
+    </fieldset>
+
+    <div class="actions">
+      <span class="status" id="status" role="alert"></span>
+      <button type="submit" class="primary">Save</button>
+    </div>
   </form>
+  <script src="common.js"></script>
   <script src="settings.js"></script>
 </body>
 </html>

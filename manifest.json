@@ -1,10 +1,10 @@
 {
-  "name": "Blank new tab page",
-  "description": "Overrides the new tab page, home page, and startup pages to be blank",
-  "version": "0.3",
+  "name": "Override new tab",
+  "description": "Overrides the new tab page and home page on organisation-managed browsers where they cannot be changed.",
+  "version": "0.5",
   "incognito": "split",
   "chrome_url_overrides": {
-    "newtab": "blank.html"
+    "newtab": "redirected.html"
   },
   "background": {
     "service_worker": "service-worker.js"
@@ -20,7 +20,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["blank.html", "blank.js"],
+      "resources": ["redirected.html", "redirected.js", "common.js"],
       "matches": ["<all_urls>"]
     }
   ],
